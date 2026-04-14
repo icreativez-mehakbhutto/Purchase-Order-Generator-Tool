@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Purchase Order Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9f0f5 0%, #dce3ec 100%);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+        }
+
+        /* Main card container */
+        .po-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 5px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        /* Header */
+        .po-header {
+            background: #0a2b3e;
+            padding: 1.5rem 2rem;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+
+        .title-section h1 {
+            font-weight: 600;
+            font-size: 1.8rem;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #fff, #b9e2ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .title-section p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+
+        .badge-deep {
+            background: #1e5a7a;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        /* two-column layout */
+        .po-layout {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        /* form panel */
+        .form-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #fefefe;
+            padding: 1.8rem 2rem;
+            border-right: 1px solid #e2edf2;
+        }
+
+        .preview-panel {
+            flex: 2;
+            background: #ffffff;
+            padding: 1.8rem 2rem;
+        }
+
+        /* form styles */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #2c5a74;
+            margin-bottom: 0.3rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid #cbdde6;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: 0.2s;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0f6b8c;
+            box-shadow: 0 0 0 3px rgba(15, 107, 140, 0.2);
+        }
+
+        /* items table in form */
+        .items-editor {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 1rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .item-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .item-row input {
+            flex: 2;
+            min-width: 100px;
+        }
+
+        .item-row .qty-input {
+            flex: 0.8;
+            min-width: 70px;
+        }
+
+        .item-row .price-input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .item-row button {
+            background: #dceaf0;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 36px;
+            height: 36px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #2c3e44;
+        }
+
+        .item-row button:hover {
+            background: #c0d2db;
+        }
+
+        .add-item-btn {
+            background: #0a2b3e;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-weight: 500;
+            margin-top: 0.6rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .add-item-btn:hover {
+            background: #144f6b;
+        }
+
+        .btn-generate {
+            background: #1f6e43;
+            color: white;
+            width: 100%;
+            padding: 0.85rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin: 1.5rem 0 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-generate:hover {
+            background: #0f5838;
+            transform: translateY(-1px);
+        }
+
+        .reset-btn {
+            background: #e2e8f0;
+            color: #1e2f3a;
+            width: 100%;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Purchase Order Preview Card */
+        .po-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9f0f4;
+            overflow: hidden;
+        }
+
+        .po-header-preview {
+            background: #fef7e0;
+            padding: 1rem 1.8rem;
+            border-bottom: 2px dashed #d4bc7a;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .po-title {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #2c3e2f;
+            letter-spacing: 2px;
+        }
+
+        .po-number {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+
+        .po-body {
+            padding: 1.5rem 1.8rem;
+        }
+
+        .info-grid {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            background: #fafcff;
+            padding: 1rem;
+            border-radius: 20px;
+        }
+
+        .info-block {
+            font-size: 0.85rem;
+        }
+
+        .info-block strong {
+            color: #1b4e6e;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .items-table-preview {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.85rem;
+        }
+
+        .items-table-preview th {
+            text-align: left;
+            background: #eef3f7;
+            padding: 12px 8px;
+            border-bottom: 2px solid #cbdde2;
+        }
+
+        .items-table-preview td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2edf0;
+        }
+
+        .totals {
+            text-align: right;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #e0eef3;
+        }
+
+        .totals p {
+            margin: 6px 0;
+            font-weight: 500;
+        }
+
+        .grand-total {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1a6b46;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        .print-btn, .download-btn {
+            background: #0f2e3b;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .print-btn {
+            background: #2c5f8a;
+        }
+
+        .download-btn {
+            background: #1a5d3c;
+        }
+
+        .print-btn:hover, .download-btn:hover {
+            filter: brightness(0.9);
+            transform: translateY(-1px);
+        }
+
+        hr {
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                padding: 1rem;
+            }
+            .form-panel, .preview-panel {
+                padding: 1.2rem;
+            }
+            .item-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .item-row button {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="po-container">
+    <div class="po-header">
+        <div class="title-section">
+            <h1>📄 PURCHASE ORDER GENERATOR</h1>
+            <p>Create, customize & export professional POs</p>
+        </div>
+        <div class="badge-deep">
+            ⚡ iCreativez Enterprise
+        </div>
+    </div>
+
+    <div class="po-layout">
+        <!-- left side: form inputs -->
+        <div class="form-panel">
+            <div class="form-group">
+                <label>🏢 Vendor / Supplier</label>
+                <input type="text" id="vendorName" placeholder="Company name" value="DeepSource Manufacturing Ltd.">
+            </div>
+            <div class="form-group">
+                <label>📍 Vendor Address</label>
+                <textarea id="vendorAddr" rows="2" placeholder="Street, City, ZIP">123 Industrial Ave, Metropolis, NY 10001</textarea>
+            </div>
+            <div class="form-group">
+                <label>📦 Ship To (Your Company)</label>
+                <input type="text" id="customerName" placeholder="Your company" value="NovaTech Solutions">
+            </div>
+            <div class="form-group">
+                <label>📍 Ship To Address</label>
+                <textarea id="customerAddr" rows="2" placeholder="Delivery address">455 Innovation Drive, Silicon Valley, CA 94025</textarea>
+            </div>
+            <div class="form-group">
+                <label>🆔 PO Number</label>
+                <input type="text" id="poNumber" placeholder="PO-001" value="PO-DS-2412">
+            </div>
+            <div class="form-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex:1">
+                    <label>📅 Issue Date</label>
+                    <input type="date" id="issueDate">
+                </div>
+                <div style="flex:1">
+                    <label>⏳ Due Date</label>
+                    <input type="date" id="dueDate">
+                </div>
+            </div>
+
+            <div class="items-editor">
+                <label>📋 LINE ITEMS (description, qty, unit price)</label>
+                <div id="itemsListContainer">
+                    <!-- dynamic item rows will be injected here -->
+                </div>
+                <button type="button" class="add-item-btn" id="addItemBtn">+ Add new item</button>
+            </div>
+
+            <div class="form-group">
+                <label>📝 Notes / Terms</label>
+                <textarea id="notes" rows="2" placeholder="Payment terms, delivery notes...">Net 30 days. Please send invoice to accounting@example.com</textarea>
+            </div>
+
+            <button class="btn-generate" id="refreshPreviewBtn">⟳ Refresh Purchase Order</button>
+            <button class="reset-btn" id="resetDefaultBtn">↺ Reset to Default Example</button>
+        </div>
+
+        <!-- right side: preview + export -->
+        <div class="preview-panel">
+            <div class="po-card" id="poPreviewCard">
+                <!-- dynamic PO preview injected via JS -->
+                <div class="po-header-preview">
+                    <div class="po-title">PURCHASE ORDER</div>
+                    <div class="po-number" id="previewPoNumber">PO-XXXX</div>
+                </div>
+                <div class="po-body">
+                    <div class="info-grid">
+                        <div class="info-block"><strong>VENDOR</strong><span id="previewVendor">-</span><br><span id="previewVendorAddr"></span></div>
+                        <div class="info-block"><strong>SHIP TO</strong><span id="previewCustomer">-</span><br><span id="previewCustomerAddr"></span></div>
+                        <div class="info-block"><strong>ISSUE DATE</strong><span id="previewIssueDate">—</span><br><strong>DUE DATE</strong><span id="previewDueDate">—</span></div>
+                    </div>
+
+                    <table class="items-table-preview" id="itemsPreviewTable">
+                        <thead>
+                            <tr><th>Item Description</th><th>Qty</th><th>Unit Price ($)</th><th>Total ($)</th></tr>
+                        </thead>
+                        <tbody id="previewTableBody">
+                            <tr><td colspan="4" style="text-align:center;">Add items to see details</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="totals">
+                        <p>Subtotal: $<span id="previewSubtotal">0.00</span></p>
+                        <p>Tax (0%): $0.00</p>
+                        <p class="grand-total">GRAND TOTAL: $<span id="previewGrandTotal">0.00</span></p>
+                    </div>
+                    <div><small id="previewNotes">Notes: </small></div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="print-btn" id="printPoBtn">🖨️ Print / Save as PDF</button>
+                <button class="download-btn" id="downloadJsonBtn">📎 Export PO Data (JSON)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- Core Data ----------
+    let lineItems = [
+        { description: "Precision Steel Rods 5mm", quantity: 50, unitPrice: 12.50 },
+        { description: "Industrial Grade Bolts (pack of 100)", quantity: 20, unitPrice: 8.75 },
+        { description: "Anti-static Wrist Straps", quantity: 12, unitPrice: 5.99 }
+    ];
+
+    // DOM elements
+    const vendorNameInp = document.getElementById('vendorName');
+    const vendorAddrInp = document.getElementById('vendorAddr');
+    const customerNameInp = document.getElementById('customerName');
+    const customerAddrInp = document.getElementById('customerAddr');
+    const poNumberInp = document.getElementById('poNumber');
+    const issueDateInp = document.getElementById('issueDate');
+    const dueDateInp = document.getElementById('dueDate');
+    const notesInp = document.getElementById('notes');
+    const itemsContainer = document.getElementById('itemsListContainer');
+    const addItemBtn = document.getElementById('addItemBtn');
+    const refreshBtn = document.getElementById('refreshPreviewBtn');
+    const resetBtn = document.getElementById('resetDefaultBtn');
+    const printBtn = document.getElementById('printPoBtn');
+    const downloadBtn = document.getElementById('downloadJsonBtn');
+
+    // preview spans
+    const previewPoNumberSpan = document.getElementById('previewPoNumber');
+    const previewVendorSpan = document.getElementById('previewVendor');
+    const previewVendorAddrSpan = document.getElementById('previewVendorAddr');
+    const previewCustomerSpan = document.getElementById('previewCustomer');
+    const previewCustomerAddrSpan = document.getElementById('previewCustomerAddr');
+    const previewIssueDateSpan = document.getElementById('previewIssueDate');
+    const previewDueDateSpan = document.getElementById('previewDueDate');
+    const previewSubtotalSpan = document.getElementById('previewSubtotal');
+    const previewGrandTotalSpan = document.getElementById('previewGrandTotal');
+    const previewNotesSpan = document.getElementById('previewNotes');
+    const previewTableBody = document.getElementById('previewTableBody');
+
+    // Helper: set default dates (today + 30 days)
+    function setDefaultDates() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        if (!issueDateInp.value) issueDateInp.value = todayStr;
+        
+        const due = new Date();
+        due.setDate(due.getDate() + 30);
+        const yyyy2 = due.getFullYear();
+        const mm2 = String(due.getMonth() + 1).padStart(2, '0');
+        const dd2 = String(due.getDate()).padStart(2, '0');
+        const dueStr = `${yyyy2}-${mm2}-${dd2}`;
+        if (!dueDateInp.value) dueDateInp.value = dueStr;
+    }
+
+    // Render item rows inside form (editable list)
+    function renderItemFormRows() {
+        itemsContainer.innerHTML = '';
+        lineItems.forEach((item, idx) => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'item-row';
+            rowDiv.setAttribute('data-index', idx);
+            rowDiv.innerHTML = `
+                <input type="text" class="item-desc" value="${escapeHtml(item.description)}" placeholder="Description">
+                <input type="number" class="item-qty" value="${item.quantity}" step="1" min="0" placeholder="Qty">
+                <input type="number" class="item-price" value="${item.unitPrice}" step="0.01" min="0" placeholder="$">
+                <button type="button" class="remove-item-btn" title="Remove item">✖</button>
+            `;
+            itemsContainer.appendChild(rowDiv);
+        });
+        // attach remove events
+        document.querySelectorAll('.remove-item-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = btn.closest('.item-row');
+                const idx = row.getAttribute('data-index');
+                if (idx !== null) {
+                    lineItems.splice(parseInt(idx), 1);
+                    renderItemFormRows();
+                    refreshPreview();   // update preview after removal
+                }
+            });
+        });
+        // attach input listeners for live update
+        document.querySelectorAll('.item-row').forEach((row, i) => {
+            const descInp = row.querySelector('.item-desc');
+            const qtyInp = row.querySelector('.item-qty');
+            const priceInp = row.querySelector('.item-price');
+            const updateItem = () => {
+                if (lineItems[i]) {
+                    lineItems[i].description = descInp.value;
+                    lineItems[i].quantity = parseFloat(qtyInp.value) || 0;
+                    lineItems[i].unitPrice = parseFloat(priceInp.value) || 0;
+                    refreshPreview();
+                }
+            };
+            descInp.addEventListener('input', updateItem);
+            qtyInp.addEventListener('input', updateItem);
+            priceInp.addEventListener('input', updateItem);
+        });
+    }
+
+    // helper escape
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // compute totals from lineItems
+    function computeTotals() {
+        let subtotal = 0;
+        for (let item of lineItems) {
+            const qty = Number(item.quantity) || 0;
+            const price = Number(item.unitPrice) || 0;
+            subtotal += qty * price;
+        }
+        return { subtotal, grandTotal: subtotal };
+    }
+
+    // refresh the preview panel with all current data
+    function refreshPreview() {
+        // vendor info
+        const vendor = vendorNameInp.value.trim() || "[Vendor name]";
+        const vendorAddr = vendorAddrInp.value.trim() || "[Address]";
+        const customer = customerNameInp.value.trim() || "[Your company]";
+        const customerAddr = customerAddrInp.value.trim() || "[Shipping address]";
+        const poNumber = poNumberInp.value.trim() || "PO-000";
+        const issueDate = issueDateInp.value || "Not set";
+        const dueDate = dueDateInp.value || "Not set";
+        const notes = notesInp.value.trim() || "—";
+
+        previewPoNumberSpan.innerText = poNumber;
+        previewVendorSpan.innerText = vendor;
+        previewVendorAddrSpan.innerText = vendorAddr;
+        previewCustomerSpan.innerText = customer;
+        previewCustomerAddrSpan.innerText = customerAddr;
+        previewIssueDateSpan.innerText = issueDate;
+        previewDueDateSpan.innerText = dueDate;
+        previewNotesSpan.innerHTML = `<strong>Notes:</strong> ${escapeHtml(notes)}`;
+
+        // Build items table
+        if (!lineItems.length) {
+            previewTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No items added. Add items from left panel.</td></tr>';
+            previewSubtotalSpan.innerText = '0.00';
+            previewGrandTotalSpan.innerText = '0.00';
+            return;
+        }
+
+        let subtotalAcc = 0;
+        let rowsHtml = '';
+        for (let item of lineItems) {
+            const qty = Number(item.quantity) || 0;
+            const price = Number(item.unitPrice) || 0;
+            const total = qty * price;
+            subtotalAcc += total;
+            rowsHtml += `<tr>
+                <td>${escapeHtml(item.description) || '-'}</td>
+                <td style="text-align:center">${qty}</td>
+                <td style="text-align:right">$${price.toFixed(2)}</td>
+                <td style="text-align:right">$${total.toFixed(2)}</td>
+            </tr>`;
+        }
+        previewTableBody.innerHTML = rowsHtml;
+        previewSubtotalSpan.innerText = subtotalAcc.toFixed(2);
+        previewGrandTotalSpan.innerText = subtotalAcc.toFixed(2);
+    }
+
+    // full sync from all input fields + items array -> then refresh preview
+    function fullSyncAndRefresh() {
+        // items already in lineItems (updated via live listeners)
+        // ensure that item rows are synced (they already update lineItems)
+        // but in case any direct field change we re-capture from item rows again:
+        const rows = document.querySelectorAll('.item-row');
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (lineItems[i]) {
+                const desc = row.querySelector('.item-desc')?.value;
+                const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+                const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                if (desc !== undefined) lineItems[i].description = desc;
+                lineItems[i].quantity = qty;
+                lineItems[i].unitPrice = price;
+            }
+        }
+        refreshPreview();
+    }
+
+    // add new blank item
+    function addNewItem() {
+        lineItems.push({ description: "New product", quantity: 1, unitPrice: 0.00 });
+        renderItemFormRows();
+        refreshPreview();
+    }
+
+    // reset to default example (including vendor, dates, items)
+    function resetToDefault() {
+        vendorNameInp.value = "DeepSource Manufacturing Ltd.";
+        vendorAddrInp.value = "123 Industrial Ave, Metropolis, NY 10001";
+        customerNameInp.value = "NovaTech Solutions";
+        customerAddrInp.value = "455 Innovation Drive, Silicon Valley, CA 94025";
+        poNumberInp.value = "PO-DS-2412";
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        issueDateInp.value = `${yyyy}-${mm}-${dd}`;
+        const due = new Date();
+        due.setDate(due.getDate() + 30);
+        const yyyy2 = due.getFullYear();
+        const mm2 = String(due.getMonth() + 1).padStart(2, '0');
+        const dd2 = String(due.getDate()).padStart(2, '0');
+        dueDateInp.value = `${yyyy2}-${mm2}-${dd2}`;
+        notesInp.value = "Net 30 days. Please send invoice to accounting@example.com";
+        lineItems = [
+            { description: "Precision Steel Rods 5mm", quantity: 50, unitPrice: 12.50 },
+            { description: "Industrial Grade Bolts (pack of 100)", quantity: 20, unitPrice: 8.75 },
+            { description: "Anti-static Wrist Straps", quantity: 12, unitPrice: 5.99 }
+        ];
+        renderItemFormRows();
+        refreshPreview();
+    }
+
+    // print (save as PDF)
+    function printPurchaseOrder() {
+        const printContent = document.getElementById('poPreviewCard').cloneNode(true);
+        const originalTitle = document.title;
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Please allow pop-ups to print.");
+            return;
+        }
+        printWindow.document.write(`
+            <html>
+            <head><title>Purchase Order - ${poNumberInp.value}</title>
+            <style>
+                body { font-family: 'Inter', Arial, sans-serif; margin: 1.5cm; }
+                .po-card { max-width: 100%; margin:0; box-shadow: none; border: 1px solid #ccc; }
+                .action-buttons { display: none; }
+                .print-btn, .download-btn { display: none; }
+                .items-table-preview { width:100%; border-collapse: collapse; }
+                .items-table-preview th, .items-table-preview td { border:1px solid #aaa; padding: 8px; }
+                .po-header-preview { background: #f5f0e0; }
+            </style>
+            </head>
+            <body>${printContent.outerHTML}</body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => { printWindow.close(); }, 1000);
+    }
+
+    // export data as JSON (all current PO fields)
+    function exportAsJSON() {
+        const poData = {
+            poNumber: poNumberInp.value,
+            vendor: { name: vendorNameInp.value, address: vendorAddrInp.value },
+            shipTo: { name: customerNameInp.value, address: customerAddrInp.value },
+            issueDate: issueDateInp.value,
+            dueDate: dueDateInp.value,
+            lineItems: lineItems.map(item => ({ ...item })),
+            notes: notesInp.value,
+            generatedAt: new Date().toISOString()
+        };
+        const dataStr = JSON.stringify(poData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `purchase_order_${poNumberInp.value || 'export'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // Event bindings
+    addItemBtn.addEventListener('click', addNewItem);
+    refreshBtn.addEventListener('click', fullSyncAndRefresh);
+    resetBtn.addEventListener('click', resetToDefault);
+    printBtn.addEventListener('click', printPurchaseOrder);
+    downloadBtn.addEventListener('click', exportAsJSON);
+    
+    // Live form fields update preview (vendor, dates, notes...)
+    const liveInputs = [vendorNameInp, vendorAddrInp, customerNameInp, customerAddrInp, poNumberInp, issueDateInp, dueDateInp, notesInp];
+    liveInputs.forEach(inp => inp.addEventListener('input', () => refreshPreview()));
+    
+    // initial load
+    setDefaultDates();
+    renderItemFormRows();
+    refreshPreview();
+</script>
+</body>
+</html>
